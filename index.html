@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A MASMORRA - THE STONES</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="age-gate" id="ageGate">
+    <div class="age-card">
+      <p class="eyebrow">+18 • Horror adulto • Drama • Investigação</p>
+      <h1>A MASMORRA<br><span>THE STONES</span></h1>
+      <p>
+        Este RPG contém temas adultos e sombrios, incluindo true crime ficcional,
+        investigação policial, sequestro, violência psicológica e dark romance.
+      </p>
+      <button id="enterButton">Tenho 18 anos ou mais</button>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-symbol">⚰️</span>
+      <div>
+        <strong>A MASMORRA</strong>
+        <small>THE STONES</small>
+      </div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
+
+    <nav class="nav" id="navMenu">
+      <a href="#inicio">Início</a>
+      <a href="#mapa">Mapa</a>
+      <a href="#personagens">Personagens</a>
+      <a href="#eventos">Eventos</a>
+      <a href="#avatares">Avatares</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="inicio" class="hero section">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="eyebrow" id="homeEyebrow">Dark Romance • Horror • Investigação Policial</p>
+        <h1 id="homeTitle">A MASMORRA - THE STONES</h1>
+        <p id="homeDescription">
+          Uma cidade marcada por desaparecimentos, pactos silenciosos, crimes ocultos
+          e personagens quebrados tentando sobreviver aos próprios segredos.
+        </p>
+        <div class="hero-actions">
+          <a class="primary-button" href="#personagens">Ver personagens</a>
+          <a class="secondary-button" href="#eventos">Eventos ativos</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="mapa" class="section content-section">
+      <div class="section-heading">
+        <p class="eyebrow">Território narrativo</p>
+        <h2>Mapa</h2>
+        <p>Locais importantes, zonas de perigo, pontos de investigação e áreas controladas por grupos.</p>
+      </div>
+      <div id="mapContainer" class="map-grid loading">Carregando mapa...</div>
+    </section>
+
+    <section id="personagens" class="section content-section">
+      <div class="section-heading">
+        <p class="eyebrow">Elenco principal</p>
+        <h2>Personagens</h2>
+        <p>Civis, criminosos e investigadores envolvidos na trama.</p>
+      </div>
+
+      <div class="filters" id="characterFilters">
+        <button class="filter active" data-filter="todos">Todos</button>
+        <button class="filter" data-filter="civil">Civil</button>
+        <button class="filter" data-filter="criminoso">Criminosos</button>
+        <button class="filter" data-filter="investigador">Investigadores</button>
+      </div>
+
+      <div id="charactersContainer" class="cards-grid loading">Carregando personagens...</div>
+    </section>
+
+    <section id="eventos" class="section content-section">
+      <div class="section-heading">
+        <p class="eyebrow">Linha do tempo</p>
+        <h2>Eventos</h2>
+        <p>Capítulos, investigações, cenas especiais, festas, operações e acontecimentos narrativos.</p>
+      </div>
+      <div id="eventsContainer" class="cards-grid loading">Carregando eventos...</div>
+    </section>
+
+    <section id="avatares" class="section content-section">
+      <div class="section-heading">
+        <p class="eyebrow">Controle visual</p>
+        <h2>Avatares já utilizados</h2>
+        <p>Lista para evitar repetição de faceclaims e referências visuais.</p>
+      </div>
+      <div id="avatarsContainer" class="avatar-grid loading">Carregando avatares...</div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> A MASMORRA - THE STONES. RPG ficcional para maiores de 18 anos.</p>
+  </footer>
+
+  <template id="characterTemplate">
+    <article class="card character-card">
+      <img class="card-image" src="" alt="">
+      <div class="card-body">
+        <div class="card-topline">
+          <span class="tag"></span>
+        </div>
+        <h3></h3>
+        <p class="personality"></p>
+        <details>
+          <summary>História</summary>
+          <p class="history"></p>
+        </details>
+        <details>
+          <summary>Detalhes adicionais</summary>
+          <p class="details"></p>
+        </details>
+      </div>
+    </article>
+  </template>
+
+  <template id="eventTemplate">
+    <article class="card event-card">
+      <img class="card-image" src="" alt="">
+      <div class="card-body">
+        <div class="card-topline">
+          <span class="tag"></span>
+          <span class="date"></span>
+        </div>
+        <h3></h3>
+        <p class="time"></p>
+      </div>
+    </article>
+  </template>
+
+  <template id="avatarTemplate">
+    <article class="avatar-card">
+      <img src="" alt="">
+      <strong></strong>
+    </article>
+  </template>
+
+  <template id="mapTemplate">
+    <article class="map-card">
+      <img src="" alt="">
+      <div>
+        <span class="tag"></span>
+        <h3></h3>
+        <p></p>
+      </div>
+    </article>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
