@@ -14,6 +14,9 @@
     personagens.csv
     eventos.csv
     avatares.csv
+
+  EVENTOS agora aceita descrição:
+  foto,nome,tipo,data,hora,descricao
 */
 
 /* =========================
@@ -21,11 +24,11 @@
 ========================= */
 
 const SHEETS = {
-  inicio: "inicio.csv",
-  mapa: "mapa.csv",
-  personagens: "personagens.csv",
-  eventos: "eventos.csv",
-  avatares: "avatares.csv",
+  inicio: "data/inicio.csv",
+  mapa: "data/mapa.csv",
+  personagens: "data/personagens.csv",
+  eventos: "data/eventos.csv",
+  avatares: "data/avatares.csv",
 };
 
 const FALLBACK_IMAGES = {
@@ -295,15 +298,8 @@ function carregarEventos() {
 
   if (!container || !template) return;
 
-  fetch("data/eventos.csv?v=" + Date.now())
-    .then((res) => res.text())
-    .then((texto) => {
-      alert("CSV recebido:\n" + texto);
-
-      const eventos = csvParaObjetos(texto);
-
-      alert("Eventos convertidos: " + JSON.stringify(eventos));
-
+  carregarCSV(SHEETS.eventos, "eventos")
+    .then((eventos) => {
       limparContainer(container);
 
       if (!eventos.length) {
@@ -314,11 +310,33 @@ function carregarEventos() {
       eventos.forEach((evento) => {
         const card = template.content.cloneNode(true);
 
+        const article = card.querySelector(".event-card");
         const img = card.querySelector("img");
         const tag = card.querySelector(".tag");
         const date = card.querySelector(".date");
         const title = card.querySelector("h3");
         const time = card.querySelector(".time");
+
+        if (article) {
+          article.classList.add("clickable-event");
+          article.setAttribute("tabindex", "0");
+          article.setAttribute("role", "button");
+          article.setAttribute(
+            "aria-label",
+            `Abrir detalhes do evento ${evento.nome || ""}`
+          );
+
+          article.addEventListener("click", () => {
+            abrirDescricaoEvento(evento);
+          });
+
+          article.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              abrirDescricaoEvento(evento);
+            }
+          });
+        }
 
         if (img) {
           img.src = imagemSegura(evento.foto, FALLBACK_IMAGES.event);
@@ -342,6 +360,80 @@ function carregarEventos() {
       mostrarErro(container, err);
     });
 }
+
+function abrirDescricaoEvento(evento) {
+  const modalAntigo = document.getElementById("eventModal");
+
+  if (modalAntigo) {
+    modalAntigo.remove();
+  }
+
+  const modal = document.createElement("div");
+  modal.id = "eventModal";
+  modal.className = "event-modal";
+
+  modal.innerHTML = `
+    <div class="event-modal-content">
+      <button class="event-modal-close" aria-label="Fechar">×</button>
+
+      <img
+        class="event-modal-image"
+        src="${escaparHTML(imagemSegura(evento.foto, FALLBACK_IMAGES.event))}"
+        alt="${escaparHTML(evento.nome || "Evento")}"
+      >
+
+      <div class="event-modal-body">
+        <span class="tag">${escaparHTML(evento.tipo || "Evento")}</span>
+
+        <h2>${escaparHTML(evento.nome || "Evento sem nome")}</h2>
+
+        <p class="event-modal-date">
+          ${escaparHTML(evento.data || "")}
+          ${evento.hora ? ` • ${escaparHTML(evento.hora)}` : ""}
+        </p>
+
+        <p class="event-modal-description">
+          ${escaparHTML(evento.descricao || "Sem descrição cadastrada.")}
+        </p>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.body.classList.add("modal-open");
+
+  const closeButton = modal.querySelector(".event-modal-close");
+
+  closeButton.onclick = () => {
+    fecharModalEvento();
+  };
+
+  modal.onclick = (event) => {
+    if (event.target === modal) {
+      fecharModalEvento();
+    }
+  };
+
+  document.addEventListener("keydown", fecharModalComEsc);
+}
+
+function fecharModalEvento() {
+  const modal = document.getElementById("eventModal");
+
+  if (modal) {
+    modal.remove();
+  }
+
+  document.body.classList.remove("modal-open");
+  document.removeEventListener("keydown", fecharModalComEsc);
+}
+
+function fecharModalComEsc(event) {
+  if (event.key === "Escape") {
+    fecharModalEvento();
+  }
+}
+
 /* =========================
    CARREGAR AVATARES
 ========================= */
@@ -417,29 +509,26 @@ function carregarCSV(url, nomeDaSecao) {
 ========================= */
 
 function csvParaObjetos(csv) {
-  const linhas = String(csv || "")
-    .replace(/^\uFEFF/, "")
-    .trim()
-    .split(/\r?\n/)
-    .filter((linha) => linha.trim() !== "");
+  const linhas = parseCSV(csv);
 
-  if (linhas.length <= 1) return [];
+  if (!linhas.length) return [];
 
-  const headers = linhas[0]
-    .split(",")
-    .map((h) => normalizarCabecalho(h));
+  const headers = linhas.shift().map((h) => normalizarCabecalho(h));
 
-  return linhas.slice(1).map((linha) => {
-    const valores = linha.split(",");
+  return linhas
+    .filter((linha) =>
+      linha.some((valor) => String(valor || "").trim() !== "")
+    )
+    .map((linha) => {
+      const obj = {};
 
-    const obj = {};
+      headers.forEach((header, index) => {
+        if (!header) return;
+        obj[header] = linha[index]?.trim() || "";
+      });
 
-    headers.forEach((header, index) => {
-      obj[header] = valores[index]?.trim() || "";
+      return obj;
     });
-
-    return obj;
-  });
 }
 
 /*
@@ -541,6 +630,15 @@ function setText(id, value) {
 
 function imagemSegura(url, fallback) {
   return url && /^https?:\/\//i.test(url) ? url : fallback;
+}
+
+function escaparHTML(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function limparContainer(container) {
