@@ -1,65 +1,76 @@
 /*
   A MASMORRA - THE STONES
 
-  Esta versão aceita links do Google Planilhas publicados como:
-  - Página web: /pubhtml
-  - CSV: /pub?gid=0&single=true&output=csv
+  Versão para ler arquivos CSV diretamente do GitHub Pages.
 
-  Cabeçalhos esperados:
+  Estrutura esperada:
 
-  INÍCIO:
-  title | eyebrow | description | banner
-
-  MAPA:
-  foto | nome | tipo | descricao
-
-  PERSONAGENS:
-  foto | nome | personalidade | historia | grupo | detalhes
-
-  EVENTOS:
-  foto | nome | tipo | data | hora
-
-  AVATARES:
-  foto | nome
+  index.html
+  styles.css
+  script.js
+  data/
+    inicio.csv
+    mapa.csv
+    personagens.csv
+    eventos.csv
+    avatares.csv
 */
 
+/* =========================
+   CONFIGURAÇÕES
+========================= */
+
 const SHEETS = {
-  inicio: "COLE_AQUI_O_LINK_DA_PLANILHA_INICIO",
-
-  mapa: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_3TN8B_dMhjqkE1SVXpJSh9PaBxwX8E0MqiOjGLNn1mGU5t-Gage3cnsc-G2TeGLsfPMoCzc-wFRk/pubhtml",
-
-  personagens: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQoLDimGYdHD5dj6R8LBNREZFDVqA-KCDFUZan-z6cu-QvFuk0bd8bLOE0yfxRFnkSmpcFZ8J_VJ66s/pubhtml",
-
-  eventos: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6MchWxfd_yxPIA8Ub8TqgltXM-VIhMNf5LkCsmndu8v6QcFS4_XQlooVGZGL8ilhoq2QsxEkJy9Hh/pubhtml",
-
-  avatares: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_jYYR0bz1dntqIySnOPErw-MwSe6DWUDniwIptSIzLl4L3DO5PsKOY_K56B8skAM9YYSPOHqVX2lO/pubhtml",
+  inicio: "inicio.csv",
+  mapa: "mapa.csv",
+  personagens: "personagens.csv",
+  eventos: "eventos.csv",
+  avatares: "avatares.csv",
 };
 
 const FALLBACK_IMAGES = {
-  character: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=900&q=80",
-  event: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80",
-  avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
-  map: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=900&q=80",
+  character:
+    "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=900&q=80",
+
+  event:
+    "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80",
+
+  avatar:
+    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
+
+  map:
+    "https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=900&q=80",
 };
 
+/* =========================
+   INICIAR SITE
+========================= */
+
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("Script carregou corretamente.");
+
   document.body.classList.add("locked");
 
   setupAgeGate();
   setupMenu();
   setupCharacterFilters();
 
-  const yearElement = document.getElementById("year");
-  if (yearElement) {
-    yearElement.textContent = new Date().getFullYear();
+  const year = document.getElementById("year");
+
+  if (year) {
+    year.textContent = new Date().getFullYear();
   }
 
-  loadHome();
-  loadMap();
-  loadCharacters();
-  loadEvents();
-  loadAvatars();
+  carregarInicio();
+  carregarMapa();
+  carregarPersonagens();
+  carregarEventos();
+  carregarAvatares();
 });
+
+/* =========================
+   AGE GATE
+========================= */
 
 function setupAgeGate() {
   const gate = document.getElementById("ageGate");
@@ -74,12 +85,16 @@ function setupAgeGate() {
     document.body.classList.remove("locked");
   }
 
-  button.addEventListener("click", () => {
+  button.onclick = () => {
     localStorage.setItem("masmorraAgeAccepted", "true");
     gate.classList.add("hidden");
     document.body.classList.remove("locked");
-  });
+  };
 }
+
+/* =========================
+   MENU
+========================= */
 
 function setupMenu() {
   const toggle = document.getElementById("menuToggle");
@@ -87,23 +102,27 @@ function setupMenu() {
 
   if (!toggle || !nav) return;
 
-  toggle.addEventListener("click", () => {
+  toggle.onclick = () => {
     nav.classList.toggle("open");
-  });
+  };
 
   nav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
+    link.onclick = () => {
       nav.classList.remove("open");
-    });
+    };
   });
 }
+
+/* =========================
+   FILTROS DE PERSONAGENS
+========================= */
 
 function setupCharacterFilters() {
   const filterBox = document.getElementById("characterFilters");
 
   if (!filterBox) return;
 
-  filterBox.addEventListener("click", (event) => {
+  filterBox.onclick = (event) => {
     const button = event.target.closest(".filter");
 
     if (!button) return;
@@ -117,388 +136,390 @@ function setupCharacterFilters() {
     const filter = button.dataset.filter;
 
     document.querySelectorAll(".character-card").forEach((card) => {
-      const group = normalize(card.dataset.group);
-      card.style.display = filter === "todos" || group === filter ? "" : "none";
+      const group = normalizar(card.dataset.group);
+
+      card.style.display =
+        filter === "todos" || group === filter ? "" : "none";
     });
-  });
+  };
 }
 
-async function loadHome() {
-  try {
-    const rows = await getSheetRows(SHEETS.inicio);
-    const home = rows[0];
+/* =========================
+   CARREGAR INÍCIO
+========================= */
 
-    if (!home) return;
+function carregarInicio() {
+  carregarCSV(SHEETS.inicio, "início")
+    .then((dados) => {
+      const home = dados[0];
 
-    setText("homeEyebrow", home.eyebrow);
-    setText("homeTitle", home.title);
-    setText("homeDescription", home.description);
+      if (!home) return;
 
-    if (home.banner) {
-      document
-        .querySelector(".hero")
-        ?.style.setProperty("--hero-image", `url("${home.banner}")`);
-    }
-  } catch (error) {
-    console.warn("Não foi possível carregar a seção inicial:", error);
-  }
+      setText("homeEyebrow", home.eyebrow);
+      setText("homeTitle", home.title);
+      setText("homeDescription", home.description);
+
+      if (home.banner) {
+        const hero = document.querySelector(".hero");
+
+        if (hero) {
+          hero.style.setProperty("--hero-image", `url("${home.banner}")`);
+        }
+      }
+    })
+    .catch((err) => {
+      console.warn("Início não carregado:", err);
+    });
 }
 
-async function loadMap() {
+/* =========================
+   CARREGAR MAPA
+========================= */
+
+function carregarMapa() {
   const container = document.getElementById("mapContainer");
   const template = document.getElementById("mapTemplate");
 
   if (!container || !template) return;
 
-  try {
-    const rows = await getSheetRows(SHEETS.mapa);
+  carregarCSV(SHEETS.mapa, "mapa")
+    .then((locais) => {
+      limparContainer(container);
 
-    clearContainer(container);
-
-    if (!rows.length) {
-      return showEmpty(container, "Nenhum local cadastrado no mapa.");
-    }
-
-    rows.forEach((location) => {
-      const card = template.content.cloneNode(true);
-      const img = card.querySelector("img");
-
-      if (img) {
-        img.src = safeImage(location.foto, FALLBACK_IMAGES.map);
-        img.alt = location.nome || "Local do mapa";
+      if (!locais.length) {
+        mostrarVazio(container, "Nenhum local cadastrado no mapa.");
+        return;
       }
 
-      const tag = card.querySelector(".tag");
-      const title = card.querySelector("h3");
-      const description = card.querySelector("p");
+      locais.forEach((local) => {
+        const card = template.content.cloneNode(true);
 
-      if (tag) tag.textContent = location.tipo || "Local";
-      if (title) title.textContent = location.nome || "Local sem nome";
-      if (description) {
-        description.textContent =
-          location.descricao || "Sem descrição cadastrada.";
-      }
+        const img = card.querySelector("img");
+        const tag = card.querySelector(".tag");
+        const title = card.querySelector("h3");
+        const description = card.querySelector("p");
 
-      container.appendChild(card);
+        if (img) {
+          img.src = imagemSegura(local.foto, FALLBACK_IMAGES.map);
+          img.alt = local.nome || "Local do mapa";
+        }
+
+        if (tag) tag.textContent = local.tipo || "Local";
+        if (title) title.textContent = local.nome || "Local sem nome";
+
+        if (description) {
+          description.textContent =
+            local.descricao || "Sem descrição cadastrada.";
+        }
+
+        container.appendChild(card);
+      });
+    })
+    .catch((err) => {
+      mostrarErro(container, err);
     });
-  } catch (error) {
-    showError(container, error);
-  }
 }
 
-async function loadCharacters() {
+/* =========================
+   CARREGAR PERSONAGENS
+========================= */
+
+function carregarPersonagens() {
   const container = document.getElementById("charactersContainer");
   const template = document.getElementById("characterTemplate");
 
   if (!container || !template) return;
 
-  try {
-    const rows = await getSheetRows(SHEETS.personagens);
+  carregarCSV(SHEETS.personagens, "personagens")
+    .then((personagens) => {
+      limparContainer(container);
 
-    clearContainer(container);
-
-    if (!rows.length) {
-      return showEmpty(container, "Nenhum personagem cadastrado.");
-    }
-
-    rows.forEach((character) => {
-      const card = template.content.cloneNode(true);
-      const article = card.querySelector(".character-card");
-      const img = card.querySelector("img");
-
-      if (article) {
-        article.dataset.group = character.grupo || "";
+      if (!personagens.length) {
+        mostrarVazio(container, "Nenhum personagem cadastrado.");
+        return;
       }
 
-      if (img) {
-        img.src = safeImage(character.foto, FALLBACK_IMAGES.character);
-        img.alt = character.nome || "Personagem";
-      }
+      personagens.forEach((personagem) => {
+        const card = template.content.cloneNode(true);
 
-      const tag = card.querySelector(".tag");
-      const title = card.querySelector("h3");
-      const personality = card.querySelector(".personality");
-      const history = card.querySelector(".history");
-      const details = card.querySelector(".details");
+        const article = card.querySelector(".character-card");
+        const img = card.querySelector("img");
+        const tag = card.querySelector(".tag");
+        const title = card.querySelector("h3");
+        const personality = card.querySelector(".personality");
+        const history = card.querySelector(".history");
+        const details = card.querySelector(".details");
 
-      if (tag) tag.textContent = character.grupo || "Sem grupo";
-      if (title) title.textContent = character.nome || "Personagem sem nome";
+        if (article) {
+          article.dataset.group = personagem.grupo || "";
+        }
 
-      if (personality) {
-        personality.textContent =
-          character.personalidade || "Personalidade não cadastrada.";
-      }
+        if (img) {
+          img.src = imagemSegura(personagem.foto, FALLBACK_IMAGES.character);
+          img.alt = personagem.nome || "Personagem";
+        }
 
-      if (history) {
-        history.textContent = character.historia || "História não cadastrada.";
-      }
+        if (tag) tag.textContent = personagem.grupo || "Sem grupo";
+        if (title) title.textContent = personagem.nome || "Personagem sem nome";
 
-      if (details) {
-        details.textContent = character.detalhes || "Sem detalhes adicionais.";
-      }
+        if (personality) {
+          personality.textContent =
+            personagem.personalidade || "Personalidade não cadastrada.";
+        }
 
-      container.appendChild(card);
+        if (history) {
+          history.textContent =
+            personagem.historia || "História não cadastrada.";
+        }
+
+        if (details) {
+          details.textContent =
+            personagem.detalhes || "Sem detalhes adicionais.";
+        }
+
+        container.appendChild(card);
+      });
+    })
+    .catch((err) => {
+      mostrarErro(container, err);
     });
-  } catch (error) {
-    showError(container, error);
-  }
 }
 
-async function loadEvents() {
+/* =========================
+   CARREGAR EVENTOS
+========================= */
+
+function carregarEventos() {
   const container = document.getElementById("eventsContainer");
   const template = document.getElementById("eventTemplate");
 
   if (!container || !template) return;
 
-  try {
-    const rows = await getSheetRows(SHEETS.eventos);
+  carregarCSV(SHEETS.eventos, "eventos")
+    .then((eventos) => {
+      limparContainer(container);
 
-    clearContainer(container);
-
-    if (!rows.length) {
-      return showEmpty(container, "Nenhum evento cadastrado.");
-    }
-
-    rows.forEach((eventItem) => {
-      const card = template.content.cloneNode(true);
-      const img = card.querySelector("img");
-
-      if (img) {
-        img.src = safeImage(eventItem.foto, FALLBACK_IMAGES.event);
-        img.alt = eventItem.nome || "Evento";
+      if (!eventos.length) {
+        mostrarVazio(container, "Nenhum evento cadastrado.");
+        return;
       }
 
-      const tag = card.querySelector(".tag");
-      const date = card.querySelector(".date");
-      const title = card.querySelector("h3");
-      const time = card.querySelector(".time");
+      eventos.forEach((evento) => {
+        const card = template.content.cloneNode(true);
 
-      if (tag) tag.textContent = eventItem.tipo || "Evento";
-      if (date) date.textContent = eventItem.data || "";
-      if (title) title.textContent = eventItem.nome || "Evento sem nome";
+        const img = card.querySelector("img");
+        const tag = card.querySelector(".tag");
+        const date = card.querySelector(".date");
+        const title = card.querySelector("h3");
+        const time = card.querySelector(".time");
 
-      if (time) {
-        time.textContent = eventItem.hora
-          ? `Horário: ${eventItem.hora}`
-          : "Horário opcional";
-      }
+        if (img) {
+          img.src = imagemSegura(evento.foto, FALLBACK_IMAGES.event);
+          img.alt = evento.nome || "Evento";
+        }
 
-      container.appendChild(card);
+        if (tag) tag.textContent = evento.tipo || "Evento";
+        if (date) date.textContent = evento.data || "";
+        if (title) title.textContent = evento.nome || "Evento sem nome";
+
+        if (time) {
+          time.textContent = evento.hora
+            ? `Horário: ${evento.hora}`
+            : "Horário opcional";
+        }
+
+        container.appendChild(card);
+      });
+    })
+    .catch((err) => {
+      mostrarErro(container, err);
     });
-  } catch (error) {
-    showError(container, error);
-  }
 }
 
-async function loadAvatars() {
+/* =========================
+   CARREGAR AVATARES
+========================= */
+
+function carregarAvatares() {
   const container = document.getElementById("avatarsContainer");
   const template = document.getElementById("avatarTemplate");
 
   if (!container || !template) return;
 
-  try {
-    const rows = await getSheetRows(SHEETS.avatares);
+  carregarCSV(SHEETS.avatares, "avatares")
+    .then((avatares) => {
+      limparContainer(container);
 
-    clearContainer(container);
-
-    if (!rows.length) {
-      return showEmpty(container, "Nenhum avatar cadastrado.");
-    }
-
-    rows.forEach((avatar) => {
-      const card = template.content.cloneNode(true);
-      const img = card.querySelector("img");
-      const name = card.querySelector("strong");
-
-      if (img) {
-        img.src = safeImage(avatar.foto, FALLBACK_IMAGES.avatar);
-        img.alt = avatar.nome || "Avatar";
+      if (!avatares.length) {
+        mostrarVazio(container, "Nenhum avatar cadastrado.");
+        return;
       }
 
-      if (name) {
-        name.textContent = avatar.nome || "Avatar sem nome";
-      }
+      avatares.forEach((avatar) => {
+        const card = template.content.cloneNode(true);
 
-      container.appendChild(card);
-    });
-  } catch (error) {
-    showError(container, error);
-  }
-}
+        const img = card.querySelector("img");
+        const name = card.querySelector("strong");
 
-/*
-  Esta função aceita:
-  1. CSV puro.
-  2. HTML publicado pelo Google Planilhas em /pubhtml.
-*/
-async function getSheetRows(url) {
-  if (!url || url.includes("COLE_AQUI")) return [];
+        if (img) {
+          img.src = imagemSegura(avatar.foto, FALLBACK_IMAGES.avatar);
+          img.alt = avatar.nome || "Avatar";
+        }
 
-  const response = await fetch(url);
+        if (name) {
+          name.textContent = avatar.nome || "Avatar sem nome";
+        }
 
-  if (!response.ok) {
-    throw new Error(`Erro ao carregar planilha: ${response.status}`);
-  }
-
-  const text = await response.text();
-
-  const isHTML =
-    text.trim().toLowerCase().startsWith("<!doctype html") ||
-    text.trim().toLowerCase().startsWith("<html") ||
-    text.includes("<table");
-
-  if (isHTML) {
-    return htmlTableToObjects(text);
-  }
-
-  return csvToObjects(text);
-}
-
-function htmlTableToObjects(htmlText) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlText, "text/html");
-
-  const table = doc.querySelector("table");
-
-  if (!table) return [];
-
-  const matrix = Array.from(table.querySelectorAll("tr"))
-    .map((tr) =>
-      Array.from(tr.querySelectorAll("td, th")).map((cell) =>
-        cleanCellText(cell.textContent)
-      )
-    )
-    .filter((row) => row.some((cell) => cell !== ""));
-
-  if (!matrix.length) return [];
-
-  /*
-    Em links /pubhtml do Google Planilhas,
-    às vezes aparecem linhas/colunas extras.
-    Por isso o código procura automaticamente a linha de cabeçalho.
-  */
-  const headerIndex = matrix.findIndex((row) =>
-    row.some((cell) => {
-      const normalized = normalizeHeader(cell);
-
-      return [
-        "foto",
-        "nome",
-        "tipo",
-        "data",
-        "hora",
-        "personalidade",
-        "historia",
-        "grupo",
-        "detalhes",
-        "descricao",
-        "title",
-        "eyebrow",
-        "description",
-        "banner",
-      ].includes(normalized);
+        container.appendChild(card);
+      });
     })
-  );
+    .catch((err) => {
+      mostrarErro(container, err);
+    });
+}
 
-  if (headerIndex === -1) return [];
+/* =========================
+   CARREGAR CSV
+========================= */
 
-  const headers = matrix[headerIndex].map(normalizeHeader);
-  const dataRows = matrix.slice(headerIndex + 1);
+function carregarCSV(url, nomeDaSecao) {
+  console.log(`Carregando ${nomeDaSecao}:`, url);
 
-  return dataRows
-    .filter((row) => row.some((cell) => cell !== ""))
-    .map((row) => {
-      const object = {};
+  return fetch(url, { cache: "no-store" })
+    .then((res) => {
+      console.log(`Resposta ${nomeDaSecao}:`, res.status, res.url);
+
+      if (!res.ok) {
+        throw new Error(`Erro HTTP ${res.status} ao carregar ${url}`);
+      }
+
+      return res.text();
+    })
+    .then((texto) => {
+      console.log(`Texto recebido de ${nomeDaSecao}:`, texto);
+
+      const dados = csvParaObjetos(texto);
+
+      console.log(`Dados convertidos de ${nomeDaSecao}:`, dados);
+
+      return dados;
+    });
+}
+
+/* =========================
+   CSV PARA OBJETOS
+========================= */
+
+function csvParaObjetos(csv) {
+  const linhas = parseCSV(csv);
+
+  if (!linhas.length) return [];
+
+  const headers = linhas.shift().map((h) => normalizarCabecalho(h));
+
+  return linhas
+    .filter((linha) =>
+      linha.some((valor) => String(valor || "").trim() !== "")
+    )
+    .map((linha) => {
+      const obj = {};
 
       headers.forEach((header, index) => {
         if (!header) return;
-        object[header] = row[index] || "";
+        obj[header] = linha[index]?.trim() || "";
       });
 
-      return object;
+      return obj;
     });
 }
 
-function csvToObjects(csvText) {
-  const rows = parseCSV(csvText);
+/*
+  Parser CSV compatível com:
+  - vírgula
+  - ponto e vírgula
+  - tabulação
+  - campos com aspas
+*/
 
-  if (!rows.length) return [];
+function parseCSV(texto) {
+  texto = String(texto || "").replace(/^\uFEFF/, "").trim();
 
-  const headers = rows[0].map(normalizeHeader);
+  if (!texto) return [];
 
-  return rows
-    .slice(1)
-    .filter((row) => row.some((cell) => String(cell).trim() !== ""))
-    .map((row) => {
-      const object = {};
+  const primeiraLinha = texto.split(/\r?\n/)[0];
 
-      headers.forEach((header, index) => {
-        object[header] = row[index]?.trim() || "";
-      });
+  let separador = ",";
 
-      return object;
-    });
-}
+  if (primeiraLinha.includes("\t")) {
+    separador = "\t";
+  } else if (primeiraLinha.includes(";")) {
+    separador = ";";
+  }
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let value = "";
-  let insideQuotes = false;
+  const linhas = [];
+  let linha = [];
+  let valor = "";
+  let dentroDeAspas = false;
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
+  for (let i = 0; i < texto.length; i++) {
+    const char = texto[i];
+    const proximo = texto[i + 1];
 
-    if (char === '"' && insideQuotes && nextChar === '"') {
-      value += '"';
+    if (char === '"' && dentroDeAspas && proximo === '"') {
+      valor += '"';
       i++;
     } else if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
-      row.push(value);
-      value = "";
-    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
-      if (char === "\r" && nextChar === "\n") i++;
+      dentroDeAspas = !dentroDeAspas;
+    } else if (char === separador && !dentroDeAspas) {
+      linha.push(limparValor(valor));
+      valor = "";
+    } else if ((char === "\n" || char === "\r") && !dentroDeAspas) {
+      if (char === "\r" && proximo === "\n") i++;
 
-      row.push(value);
-      rows.push(row);
+      linha.push(limparValor(valor));
+      linhas.push(linha);
 
-      row = [];
-      value = "";
+      linha = [];
+      valor = "";
     } else {
-      value += char;
+      valor += char;
     }
   }
 
-  if (value || row.length) {
-    row.push(value);
-    rows.push(row);
+  if (valor || linha.length) {
+    linha.push(limparValor(valor));
+    linhas.push(linha);
   }
 
-  return rows;
+  return linhas;
 }
 
-function normalizeHeader(header) {
-  return normalize(header)
+function limparValor(valor) {
+  return String(valor || "")
+    .replace(/^\uFEFF/, "")
+    .replace(/\u00a0/g, " ")
+    .replace(/^"|"$/g, "")
+    .trim();
+}
+
+/* =========================
+   FUNÇÕES AUXILIARES
+========================= */
+
+function normalizarCabecalho(header) {
+  return normalizar(header)
+    .replace(/^\uFEFF/, "")
     .replace(/\s+/g, "_")
     .replace("história", "historia")
     .replace("descrição", "descricao");
 }
 
-function normalize(value) {
+function normalizar(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
-}
-
-function cleanCellText(value) {
-  return String(value || "")
-    .replace(/\u00a0/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function setText(id, value) {
@@ -509,26 +530,26 @@ function setText(id, value) {
   }
 }
 
-function safeImage(url, fallback) {
+function imagemSegura(url, fallback) {
   return url && /^https?:\/\//i.test(url) ? url : fallback;
 }
 
-function clearContainer(container) {
+function limparContainer(container) {
   container.classList.remove("loading", "empty", "error");
   container.innerHTML = "";
 }
 
-function showEmpty(container, message) {
+function mostrarVazio(container, mensagem) {
   container.classList.add("empty");
-  container.textContent = message;
+  container.textContent = mensagem;
 }
 
-function showError(container, error) {
-  console.error(error);
+function mostrarErro(container, erro) {
+  console.error("Erro ao carregar seção:", erro);
 
   container.classList.remove("loading");
   container.classList.add("error");
 
   container.textContent =
-    "Não foi possível carregar esta seção. Confira se o link da planilha está público e correto.";
+    "Não foi possível carregar esta seção. Confira se o arquivo CSV existe e está no caminho certo.";
 }
