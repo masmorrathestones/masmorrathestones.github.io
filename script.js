@@ -295,8 +295,15 @@ function carregarEventos() {
 
   if (!container || !template) return;
 
-  carregarCSV(SHEETS.eventos, "eventos")
-    .then((eventos) => {
+  fetch("data/eventos.csv?v=" + Date.now())
+    .then((res) => res.text())
+    .then((texto) => {
+      alert("CSV recebido:\n" + texto);
+
+      const eventos = csvParaObjetos(texto);
+
+      alert("Eventos convertidos: " + JSON.stringify(eventos));
+
       limparContainer(container);
 
       if (!eventos.length) {
@@ -411,26 +418,29 @@ function carregarCSV(url, nomeDaSecao) {
 ========================= */
 
 function csvParaObjetos(csv) {
-  const linhas = parseCSV(csv);
+  const linhas = String(csv || "")
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .split(/\r?\n/)
+    .filter((linha) => linha.trim() !== "");
 
-  if (!linhas.length) return [];
+  if (linhas.length <= 1) return [];
 
-  const headers = linhas.shift().map((h) => normalizarCabecalho(h));
+  const headers = linhas[0]
+    .split(",")
+    .map((h) => normalizarCabecalho(h));
 
-  return linhas
-    .filter((linha) =>
-      linha.some((valor) => String(valor || "").trim() !== "")
-    )
-    .map((linha) => {
-      const obj = {};
+  return linhas.slice(1).map((linha) => {
+    const valores = linha.split(",");
 
-      headers.forEach((header, index) => {
-        if (!header) return;
-        obj[header] = linha[index]?.trim() || "";
-      });
+    const obj = {};
 
-      return obj;
+    headers.forEach((header, index) => {
+      obj[header] = valores[index]?.trim() || "";
     });
+
+    return obj;
+  });
 }
 
 /*
