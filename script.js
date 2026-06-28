@@ -629,7 +629,13 @@ function setText(id, value) {
 }
 
 function imagemSegura(url, fallback) {
-  return url && /^https?:\/\//i.test(url) ? url : fallback;
+  const caminho = String(url || "").trim();
+
+  if (!caminho) {
+    return fallback;
+  }
+
+  return caminho;
 }
 
 function escaparHTML(value) {
