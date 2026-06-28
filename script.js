@@ -24,11 +24,11 @@
 ========================= */
 
 const SHEETS = {
-  inicio: "inicio.csv",
-  mapa: "mapa.csv",
-  personagens: "personagens.csv",
-  eventos: "eventos.csv",
-  avatares: "avatares.csv",
+  inicio: "data/inicio.csv",
+  mapa: "data/mapa.csv",
+  personagens: "data/personagens.csv",
+  eventos: "data/eventos.csv",
+  avatares: "data/avatares.csv",
 };
 
 const FALLBACK_IMAGES = {
